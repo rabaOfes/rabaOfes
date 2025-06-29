@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>مكتب ربيعة - تعبئة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      direction: rtl;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #loginSection, #mainInterface {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 350px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    #mainInterface {
+      display: none;
+      width: 900px;
+      height: 90vh;
+      flex-direction: row;
+    }
+    #sidebar {
+      width: 250px;
+      background: #3b5998;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      border-radius: 10px 0 0 10px;
+    }
+    #sidebar button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      padding: 12px 0;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 10px;
+      text-align: right;
+    }
+    #sidebar button:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+    #content {
+      flex-grow: 1;
+      padding: 20px 40px;
+      background: white;
+      overflow-y: auto;
+      border-radius: 0 10px 10px 0;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    input[type="text"][inputmode="numeric"] {
+      direction: ltr;
+      text-align: left;
+      font-family: monospace, monospace;
+    }
+    button {
+      background: #3b5998;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #2d4373;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background-color: #3b5998;
+      color: white;
+      font-weight: 600;
+    }
+    .notification {
+      background-color: #e8f0fe;
+      border-left: 5px solid #3b5998;
+      padding: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #333;
+      border-radius: 5px;
+    }
+    #cardValidationMessage {
+      font-size: 13px;
+      height: 18px;
+      margin-top: -8px;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 15px;
+      text-align: right;
+      font-size: 16px;
+      color: #3b5998;
+    }
+  </style>
+</head>
+<body>
+  <div id="loginSection">
+    <h2>تسجيل الدخول</h2>
+    <input type="text" id="user" placeholder="اسم المستخدم" autocomplete="username" />
+    <input type="password" id="pass" placeholder="كلمة المرور" autocomplete="current-password" />
+    <div id="loginError" style="color:red; min-height: 18px;"></div>
+    <button id="loginBtn">دخول</button>
+  </div>
+
+  <div id="mainInterface">
+    <div id="sidebar">
+      <button onclick="showSection('homeSection')">الواجهة الرئيسية</button>
+      <button onclick="showSection('recordsSection')">سجل التعبئة</button>
+      <button onclick="showSection('completedSection')">تمت التعبئة</button>
+      <button onclick="showSection('notificationsSection')">الإشعارات</button>
+      <button onclick="logout()">تسجيل خروج</button>
+    </div>
+    <div id="content">
+      <div id="homeSection" class="section">
+  <h2>إدخال تعبئة</h2>
+  <input type="text" id="card" placeholder="رقم البطاقة" inputmode="numeric" maxlength="16" />
+  <input type="text" id="name" placeholder="اسم الزبون" />
+  <select id="amount">
+    <option value="">اختر مبلغ التعبئة</option>
+    <option value="10000">10,000</option>
+    <option value="20000">20,000</option>
+    <option value="30000">30,000</option>
+    <option value="40000">40,000</option>
+    <option value="50000">50,000</option>
+    <option value="60000">60,000</option>
+    <option value="70000">70,000</option>
+    <option value="80000">80,000</option>
+    <option value="90000">90,000</option>
+    <option value="100000">100,000</option>
+  </select>
+  <button onclick="sendRecord()">إرسال</button>
+</div>
+      <div id="recordsSection" class="section" style="display:none;">
+  <h2>سجل التعبئة</h2>
+  <table>
+    <thead><tr><th>رقم البطاقة</th><th>الاسم</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
+    <tbody id="recordsTableBody"></tbody>
+  </table>
+  <p class="total" id="totalPendingAmount"></p>
+</div>
+      <div id="completedSection" class="section" style="display:none;">
+  <h2>تمت التعبئة</h2>
+  <table>
+    <thead><tr><th>رقم البطاقة</th><th>الاسم</th><th>المبلغ</th><th>التاريخ</th></tr></thead>
+    <tbody id="completedTableBody"></tbody>
+  </table>
+  <p class="total" id="totalCompletedAmount"></p>
+</div>
+      <div id="notificationsSection" class="section" style="display:none;">
+        <h2>📢 الإشعارات</h2>
+        <div id="notificationsList"></div>
+      </div>
+    </div>
+  </div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js">
+  let records = [];
+
+  function sendRecord() {
+    const card = document.getElementById("card").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const amount = parseInt(document.getElementById("amount").value);
+    if (!card.startsWith("422") || card.length !== 16) {
+      alert("رقم البطاقة غير صالح.");
+      return;
+    }
+    if (!name || !amount) {
+      alert("يرجى إدخال جميع الحقول.");
+      return;
+    }
+    const date = new Date().toLocaleString("ar-EG");
+    const newRecord = {
+      cardNumber: card,
+      customerName: name,
+      amount,
+      date,
+      status: "قيد المعالجة",
+      userAccount: currentUser
+    };
+    db.ref("records").push(newRecord).then(() => {
+      alert("✅ تم إرسال التعبئة بنجاح");
+      document.getElementById("card").value = "";
+      document.getElementById("name").value = "";
+      document.getElementById("amount").value = "";
+      loadRecords();
+    });
+  }
+
+  function loadRecords() {
+    db.ref("records").once("value", snapshot => {
+      const data = snapshot.val() || {};
+      records = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+      renderRecords();
+      renderCompleted();
+    });
+  }
+
+  function renderRecords() {
+    const tbody = document.getElementById("recordsTableBody");
+    tbody.innerHTML = "";
+    let total = 0;
+    records.filter(r => r.status === "قيد المعالجة" && r.userAccount === currentUser).forEach(r => {
+      total += r.amount;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.cardNumber}</td><td>${r.customerName}</td><td>${r.amount.toLocaleString()}</td><td>${r.date}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("totalPendingAmount").textContent = "المجموع الكلي: " + total.toLocaleString() + " دينار";
+  }
+
+  function renderCompleted() {
+    const tbody = document.getElementById("completedTableBody");
+    tbody.innerHTML = "";
+    let total = 0;
+    records.filter(r => r.status === "تمت التعبئة" && r.userAccount === currentUser).forEach(r => {
+      total += r.amount;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.cardNumber}</td><td>${r.customerName}</td><td>${r.amount.toLocaleString()}</td><td>${r.date}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("totalCompletedAmount").textContent = "المجموع الكلي: " + total.toLocaleString() + " دينار";
+  }
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js">
+  let records = [];
+
+  function sendRecord() {
+    const card = document.getElementById("card").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const amount = parseInt(document.getElementById("amount").value);
+    if (!card.startsWith("422") || card.length !== 16) {
+      alert("رقم البطاقة غير صالح.");
+      return;
+    }
+    if (!name || !amount) {
+      alert("يرجى إدخال جميع الحقول.");
+      return;
+    }
+    const date = new Date().toLocaleString("ar-EG");
+    const newRecord = {
+      cardNumber: card,
+      customerName: name,
+      amount,
+      date,
+      status: "قيد المعالجة",
+      userAccount: currentUser
+    };
+    db.ref("records").push(newRecord).then(() => {
+      alert("✅ تم إرسال التعبئة بنجاح");
+      document.getElementById("card").value = "";
+      document.getElementById("name").value = "";
+      document.getElementById("amount").value = "";
+      loadRecords();
+    });
+  }
+
+  function loadRecords() {
+    db.ref("records").once("value", snapshot => {
+      const data = snapshot.val() || {};
+      records = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+      renderRecords();
+      renderCompleted();
+    });
+  }
+
+  function renderRecords() {
+    const tbody = document.getElementById("recordsTableBody");
+    tbody.innerHTML = "";
+    let total = 0;
+    records.filter(r => r.status === "قيد المعالجة" && r.userAccount === currentUser).forEach(r => {
+      total += r.amount;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.cardNumber}</td><td>${r.customerName}</td><td>${r.amount.toLocaleString()}</td><td>${r.date}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("totalPendingAmount").textContent = "المجموع الكلي: " + total.toLocaleString() + " دينار";
+  }
+
+  function renderCompleted() {
+    const tbody = document.getElementById("completedTableBody");
+    tbody.innerHTML = "";
+    let total = 0;
+    records.filter(r => r.status === "تمت التعبئة" && r.userAccount === currentUser).forEach(r => {
+      total += r.amount;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.cardNumber}</td><td>${r.customerName}</td><td>${r.amount.toLocaleString()}</td><td>${r.date}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("totalCompletedAmount").textContent = "المجموع الكلي: " + total.toLocaleString() + " دينار";
+  }
+</script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCa7-yWkUwcC108-VlizT6TDR5gKhEG1B0",
+    authDomain: "salm1995.firebaseapp.com",
+    databaseURL: "https://salm1995-default-rtdb.firebaseio.com",
+    projectId: "salm1995",
+    storageBucket: "salm1995.appspot.com",
+    messagingSenderId: "989814377294",
+    appId: "1:989814377294:web:2bd165641354e74b38ac1f"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const users = {
+    "Salm1995": "Sadf100",
+    "Fesal": "1234",
+    "Al-Rusafi": "Obaida2004#",
+    "Almustafa": "Am244443",
+    "Smartlink": "1122muthana",
+    "Alhanosh": "dd2580dd",
+    "BRAND": "abd00000",
+    "Larsin": "Aaa0097@"
+  };
+
+  let currentUser = null;
+
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+    if (id === "notificationsSection") loadNotifications();
+  }
+
+  function logout() {
+    currentUser = null;
+    document.getElementById("mainInterface").style.display = "none";
+    document.getElementById("loginSection").style.display = "block";
+    document.getElementById("user").value = "";
+    document.getElementById("pass").value = "";
+    document.getElementById("loginError").textContent = "";
+  }
+
+  document.getElementById("loginBtn").onclick = () => {
+    const username = document.getElementById("user").value.trim();
+    const password = document.getElementById("pass").value.trim();
+    if (users[username] && users[username] === password) {
+      currentUser = username;
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("mainInterface").style.display = "flex";
+      showSection("homeSection");
+    } else {
+      document.getElementById("loginError").textContent = "بيانات الدخول غير صحيحة";
+    }
+  };
+
+  function loadNotifications() {
+    const notificationsDiv = document.getElementById("notificationsList");
+    notificationsDiv.innerHTML = "";
+
+    // إشعارات التعبئة
+    db.ref('notifications').limitToLast(20).once('value', snapshot => {
+      const data = snapshot.val() || {};
+      const notifications = Object.values(data).reverse();
+      notifications.forEach(n => {
+        if (n.userAccount === currentUser) {
+          const div = document.createElement("div");
+          div.className = "notification";
+          div.innerHTML = `✅ تم تعبئة <b>${n.amount.toLocaleString()}</b> دينار للزبون <b>${n.name}</b> في ${n.time}`;
+          notificationsDiv.appendChild(div);
+        }
+      });
+    });
+
+    // رسائل التنويه من الأدمن
+    db.ref('alerts').limitToLast(50).once('value', snapshot => {
+      const data = snapshot.val() || {};
+      const alerts = Object.values(data).reverse();
+      alerts.forEach(a => {
+        if (a.target === currentUser || a.target === "all") {
+          const div = document.createElement("div");
+          div.className = "notification";
+          div.innerHTML = `
+            <b>📌 ${a.topic}</b><br>
+            <b style="color:#3b5998;">${a.title}</b><br>
+            <span style="font-size:14px;">${a.message}</span><br>
+            <small>🕒 ${a.time}</small>
+          `;
+          notificationsDiv.appendChild(div);
+        }
+      });
+    });
+  }
+
+  let records = [];
+
+  function sendRecord() {
+    const card = document.getElementById("card").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const amount = parseInt(document.getElementById("amount").value);
+    if (!card.startsWith("422") || card.length !== 16) {
+      alert("رقم البطاقة غير صالح.");
+      return;
+    }
+    if (!name || !amount) {
+      alert("يرجى إدخال جميع الحقول.");
+      return;
+    }
+    const date = new Date().toLocaleString("ar-EG");
+    const newRecord = {
+      cardNumber: card,
+      customerName: name,
+      amount,
+      date,
+      status: "قيد المعالجة",
+      userAccount: currentUser
+    };
+    db.ref("records").push(newRecord).then(() => {
+      alert("✅ تم إرسال التعبئة بنجاح");
+      document.getElementById("card").value = "";
+      document.getElementById("name").value = "";
+      document.getElementById("amount").value = "";
+      loadRecords();
+    });
+  }
+
+  function loadRecords() {
+    db.ref("records").once("value", snapshot => {
+      const data = snapshot.val() || {};
+      records = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+      renderRecords();
+      renderCompleted();
+    });
+  }
+
+  function renderRecords() {
+    const tbody = document.getElementById("recordsTableBody");
+    tbody.innerHTML = "";
+    let total = 0;
+    records.filter(r => r.status === "قيد المعالجة" && r.userAccount === currentUser).forEach(r => {
+      total += r.amount;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.cardNumber}</td><td>${r.customerName}</td><td>${r.amount.toLocaleString()}</td><td>${r.date}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("totalPendingAmount").textContent = "المجموع الكلي: " + total.toLocaleString() + " دينار";
+  }
+
+  function renderCompleted() {
+    const tbody = document.getElementById("completedTableBody");
+    tbody.innerHTML = "";
+    let total = 0;
+    records.filter(r => r.status === "تمت التعبئة" && r.userAccount === currentUser).forEach(r => {
+      total += r.amount;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${r.cardNumber}</td><td>${r.customerName}</td><td>${r.amount.toLocaleString()}</td><td>${r.date}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("totalCompletedAmount").textContent = "المجموع الكلي: " + total.toLocaleString() + " دينار";
+  }
+</script>
+</body>
+</html>
